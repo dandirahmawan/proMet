@@ -1,12 +1,12 @@
 package com.indonesiapowe.proMET.Service;
 
 import com.indonesiapowe.proMET.Model.*;
+import com.indonesiapowe.proMET.Model.ModelView.TblMasterRuanganView;
 import com.indonesiapowe.proMET.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +40,6 @@ public class ChoicesServices {
         if(idReservasi == null){
             layouts = tdmrr.findChoicesLayout(idRuangan, startDate, finishDate);
         }else{
-            System.out.println("id reservasi is : "+idReservasi);
             Boolean isMatch = false;
             Optional<TblDetailReservasiLayout> layoutReserv = tdrlr.findByIdReservasiAndIdRuangan(idReservasi, idRuangan);
             String idLayoutReserv = layoutReserv.map(TblDetailReservasiLayout::getId).orElse("");

@@ -1,9 +1,11 @@
 package com.indonesiapowe.proMET.Service;
 
 import com.indonesiapowe.proMET.Model.*;
+import com.indonesiapowe.proMET.Model.ModelView.TblMasterRuanganView;
 import com.indonesiapowe.proMET.Repository.*;
 import com.indonesiapowe.proMET.StoreFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -50,6 +52,21 @@ public class MasterService {
     @Autowired
     StoreFile sf;
 
+    @Autowired
+    TblDetailReservasiLayoutRepository tdrlr;
+
+    @Autowired
+    TblDetailReservasiFasilitasRepository tdrfr;
+
+    @Autowired
+    TblRealisasiBiayaKonsumsiRepository realisasiBiayaKonsumsiRepository;
+
+    @Autowired
+    ViewTblUsersService vtus;
+
+    @Value("${role.id.superadmin}")
+    String roleIdSuperadmin;
+
     public Object getUnit(String id){
         if(id == null) {
             return vtmur.findAll();
@@ -58,13 +75,21 @@ public class MasterService {
         }
     }
 
-    public Object getRuangan(String idUnit, String id, String kapasitas) {
+    public Object getRuangan(String idUnit, String id, String kapasitas, String username) {
+        if(username != null){
+            ViewTblUsers vtu = vtus.getByEmail(username);
+            String roleId = vtu.getRoleId();
+            if(!roleId.equals(roleIdSuperadmin)){
+                idUnit = (vtu.getUnitId() == null) ? "" : vtu.getUnitId();
+            }
+        }
+
         if (idUnit == null && id == null) {
             return ruanganRepoView.findAll();
         }else if(id != null) {
             return ruanganRepoView.findById(id);
         }else{
-            System.out.println("kapasitas : "+kapasitas);
+            idUnit = (idUnit.equals("")) ? null : idUnit;
             List<TblMasterRuanganView> ruangans = ruanganRepoView.findByIdUnit(idUnit);
             if(kapasitas != null){
                 for(int i = 0;i<ruangans.size();i++){
@@ -99,8 +124,18 @@ public class MasterService {
         }
     }
 
-    public Object getFasilitas(String id){
+    public Object getFasilitas(String id, String username){
         if(id == null) {
+            if(username != null){
+                ViewTblUsers vtu = vtus.getByEmail(username);
+                String roleId = vtu.getRoleId();
+                String idUnit = vtu.getUnitId();
+                if(!roleId.equals(roleIdSuperadmin)){
+                    return fasilitasRepo.findByIdUnit(idUnit);
+                }else{
+                    return fasilitasRepo.findAll();
+                }
+            }
             return fasilitasRepo.findAll();
         }else{
             return this.getFasilitasById(id);
@@ -119,12 +154,21 @@ public class MasterService {
         }
     }
 
-    public Object getGedung(String id, String idUnit){
+    public Object getGedung(String id, String idUnit, String username){
+        if(username != null){
+            ViewTblUsers vtu = vtus.getByEmail(username);
+            String roleId = (vtu.getRoleId() == null) ? "" : vtu.getRoleId();
+            if(!roleId.equals(roleIdSuperadmin)){
+                idUnit = (vtu.getUnitId() == null) ? "" : vtu.getUnitId();
+            }
+        }
+
         if(id == null && idUnit == null) {
             return vtmgr.findAll();
         }else if(id != null){
             return vtmgr.findById(id);
         }else{
+            idUnit = (idUnit.equals("")) ? null : idUnit; /* uniqueidentifier cannot set "" */
             return vtmgr.findByIdUnit(idUnit);
         }
     }
@@ -368,7 +412,15 @@ public class MasterService {
     public Object deleteGedung(TblMasterGedung g){
         Optional<TblMasterGedung> gedung = gedungRepo.findById(g.getId());
         if(gedung.get() != null){
-            gedungRepo.delete(gedung.get());
+            List<TblMasterRuangan> ruanagans = ruanganRepo.findByIdGedung(g.getId());
+            if(ruanagans.size() > 0){
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", 201);
+                map.put("message", "Gedung masih terikat dengan data ruangan.");
+                return map;
+            }else{
+                gedungRepo.delete(gedung.get());
+            }
         }
 
         Map<String, Object> map = new HashMap<>();
@@ -392,6 +444,13 @@ public class MasterService {
     public Object deleteRuangan(TblMasterRuangan r){
         Optional<TblMasterRuangan> ruangan = ruanganRepo.findById(r.getId());
         if(ruangan.get() != null){
+            List<TblDetailReservasiLayout> reservasiLayouts = tdrlr.findByIdRuangan(r.getId());
+            if(reservasiLayouts.size() > 0){
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", 201);
+                map.put("message", "Data ruangan terikat dengan data reservasi");
+                return map;
+            }
             ruanganRepo.delete(ruangan.get());
         }
 
@@ -416,6 +475,13 @@ public class MasterService {
     public Object deleteFasilitas(TblMasterFasilitas f){
         Optional<TblMasterFasilitas> fasilitas = fasilitasRepo.findById(f.getId());
         if(fasilitas.get() != null){
+            List<TblDetailReservasiFasilitas> reservasiFasilitas = tdrfr.findByIdFasilitas(f.getId());
+            if(reservasiFasilitas.size() > 0){
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", 201);
+                map.put("message", "Data fasilitas masih terikat dengan data reservasi.");
+                return map;
+            }
             fasilitasRepo.delete(fasilitas.get());
         }
 
@@ -473,8 +539,15 @@ public class MasterService {
     public Object deleteVendor(TblMasterVendor v){
         Optional<TblMasterVendor> vendor = tmvr.findById(v.getId());
         if(vendor.get() != null){
-            tmvr.delete(vendor.get());
+            List<TblRealisasiBiayaKonsumsi> data = realisasiBiayaKonsumsiRepository.findBySnackPagiOrSnackSiangOrSnackSore(v.getId(), v.getId(), v.getId());
+            if(data.size() > 0){
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", 201);
+                map.put("message", "Data vendor terikat dengan data reservasi");
+                return map;
+            }
 
+            tmvr.delete(vendor.get());
             String urlImage = vendor.get().getUrlImage();
             Optional<TblUpload> upl = tur.findById(urlImage);
             if(upl.get() != null){

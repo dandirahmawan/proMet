@@ -1,5 +1,6 @@
 package com.indonesiapowe.proMET.Model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
@@ -21,6 +22,11 @@ public class TblDetailReservasiFasilitas {
 
     @Column(name = "id_reservasi")
     String idReservasi;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @Column(name = "id_fasilitas", updatable = false, insertable = false)
+    String idFasilitas;
 
     @OneToOne(targetEntity = TblMasterFasilitas.class, cascade = CascadeType.REFRESH)
     @JoinColumn(name = "id_fasilitas", referencedColumnName = "id")

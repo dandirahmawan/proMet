@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface TblDetailReservasiFasilitasRepository extends JpaRepository<TblDetailReservasiFasilitas, String> {
     List<TblDetailReservasiFasilitas> findByIdReservasiAndIdReservasiIsNotNull(String idReservasi);
+    List<TblDetailReservasiFasilitas> findByIdFasilitas(String idFasilitas);
 }

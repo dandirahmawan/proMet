@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 
 public interface TblDetailReservasiLayoutRepository extends JpaRepository<TblDetailReservasiLayout, String> {
@@ -15,4 +16,5 @@ public interface TblDetailReservasiLayoutRepository extends JpaRepository<TblDet
     int deleteByIdReservasiIsNull();
 
     Optional<TblDetailReservasiLayout> findByIdReservasiAndIdRuangan(String idReservasi, String idRuangan);
+    List<TblDetailReservasiLayout> findByIdRuangan(String idRuangan);
 }

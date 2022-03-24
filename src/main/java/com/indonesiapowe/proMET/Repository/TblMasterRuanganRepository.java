@@ -14,4 +14,6 @@ public interface TblMasterRuanganRepository extends JpaRepository<TblMasterRuang
             "view_ruangan_layout_reservasi \n" +
             "where jadwal_mulai >= ?2 and jadwal_selesai <= ?3)", nativeQuery = true)
     List<TblMasterRuangan> findChoicesRuangan(String idUnit, String startDate, String finishDate);
+
+    List<TblMasterRuangan> findByIdGedung(String idGedung);
 }

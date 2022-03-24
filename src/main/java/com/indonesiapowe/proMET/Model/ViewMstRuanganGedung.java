@@ -9,10 +9,10 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "tbl_master_ruangan")
+@Table(name = "view_mst_ruangan_gedung")
 @Getter
-@Setter
-public class TblMasterRuanganView {
+/*model untuk keperluan select data saja*/
+public class ViewMstRuanganGedung {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID",strategy = "org.hibernate.id.UUIDGenerator")
@@ -25,19 +25,14 @@ public class TblMasterRuanganView {
     @Column(name = "kode_ruangan")
     String kodeRuangan;
 
-    @Column(name = "id_unit", insertable = false, updatable = false)
+    @Column(name = "id_unit")
     String idUnit;
 
-    @OneToOne(targetEntity = TblMasterUnit.class, cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "id_unit", referencedColumnName = "id")
-    TblMasterUnit dataUnit;
-
-    @Column(name = "id_gedung", insertable = false, updatable = false)
+    @Column(name = "id_gedung")
     String idGedung;
 
-    @OneToOne(targetEntity = TblMasterGedung.class, cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "id_gedung", referencedColumnName = "id")
-    TblMasterGedung dataGedung;
+    @Column(name = "nama_gedung")
+    String namaGedung;
 
     @Column(name = "lantai")
     String lantai;
@@ -57,7 +52,7 @@ public class TblMasterRuanganView {
     @Column(name = "modify_date")
     Date modifyDate;
 
-    @OneToMany(targetEntity = TblDetailMasterRuangan.class, cascade = CascadeType.REFRESH)
+    @OneToMany(targetEntity = TblDetailMasterRuangan.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "id_ruangan", referencedColumnName = "id")
     List<TblDetailMasterRuangan> layouts;
 }

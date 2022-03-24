@@ -31,4 +31,7 @@ public class ViewSumFasilitasReservasi {
 
     @Column(name = "id_unit")
     String idUnit;
+
+    @Column(name = "status_fasilitas")
+    String statusFasilitas;
 }

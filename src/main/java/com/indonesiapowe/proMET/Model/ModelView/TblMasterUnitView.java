@@ -1,4 +1,4 @@
-package com.indonesiapowe.proMET.Model;
+package com.indonesiapowe.proMET.Model.ModelView;
 
 import lombok.Getter;
 import lombok.Setter;

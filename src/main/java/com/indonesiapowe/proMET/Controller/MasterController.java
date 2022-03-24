@@ -19,11 +19,12 @@ public class MasterController {
 
     @GetMapping("/ruangan")
     public Object getRuangan(
+            @RequestParam(required = false, name = "username") String username,
             @RequestParam(required = false, name = "id_unit") String idUnit,
             @RequestParam(required = false, name = "id") String id,
             @RequestParam(required = false, name = "kapasitas") String kapasitas
     ){
-        return ms.getRuangan(idUnit, id, kapasitas);
+        return ms.getRuangan(idUnit, id, kapasitas, username);
     }
 
     @GetMapping("/konsumsi")
@@ -32,8 +33,8 @@ public class MasterController {
     }
 
     @GetMapping("/fasilitas")
-    public Object getFasilitas(@RequestParam(required = false, name = "id") String id){
-        return ms.getFasilitas(id);
+    public Object getFasilitas(@RequestParam(required = false, name = "id") String id, @RequestParam(name = "username", required = false) String username){
+        return ms.getFasilitas(id, username);
     }
 
     @GetMapping("/layout")
@@ -47,8 +48,11 @@ public class MasterController {
     }
 
     @GetMapping("/gedung")
-    public Object getGedung(@RequestParam(required = false, name = "id") String id, @RequestParam(required = false, name = "id_unit") String idUnit){
-        return ms.getGedung(id, idUnit);
+    public Object getGedung(
+            @RequestParam(required = false, name = "id") String id,
+            @RequestParam(required = false, name = "username") String username,
+            @RequestParam(required = false, name = "id_unit") String idUnit){
+        return ms.getGedung(id, idUnit, username);
     }
 
     @GetMapping("/vendor")

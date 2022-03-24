@@ -17,8 +17,21 @@ public class ReservasiController {
     TblDetailReservasiLayoutRepository tdrlr;
 
     @GetMapping()
-    public Object getAll(@RequestParam("username") String queryParameter){
-        return rs.getByEmail(queryParameter);
+    public Object getAll(@RequestParam(value = "username", required = false) String queryParameter){
+        if(queryParameter != null && !queryParameter.equals("")) {
+            return rs.getByEmail(queryParameter);
+        }else{
+            return rs.getAll();
+        }
+    }
+
+    @GetMapping("/persetujuan")
+    public Object getPersetujuan(@RequestParam(value = "username", required = false) String queryParameter){
+        if(queryParameter != null && !queryParameter.equals("")) {
+            return rs.getPersetujuan(queryParameter);
+        }else{
+            return rs.getAll();
+        }
     }
 
     @PostMapping()

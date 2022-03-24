@@ -1,18 +1,27 @@
 package com.indonesiapowe.proMET.Service;
 
 import com.indonesiapowe.proMET.Model.*;
+import com.indonesiapowe.proMET.Model.Integrasi.RoleUser;
 import com.indonesiapowe.proMET.Model.Integrasi.SummaryFasilitas;
+import com.indonesiapowe.proMET.Model.ModelView.TblReservasiView;
 import com.indonesiapowe.proMET.Repository.*;
 import com.indonesiapowe.proMET.StoreFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
 public class ReservasiService {
     @Autowired
     TblReservasiRepository trr;
+
+    @Autowired
+    TblReservasiViewRepository trvr;
 
     @Autowired
     TblDetailMasterRuanganRepository tdmrr;
@@ -50,8 +59,47 @@ public class ReservasiService {
     @Autowired
     TblDetailReservasiFasilitasRepository tdrfr;
 
+    @Autowired
+    ViewTblUsersService vtus;
+
+    String roleIdAdminPromet = "6DEB5FAC-7D49-4A75-A774-2433412A6DBF";
+
+    @Value("${role.id.superadmin}")
+    String roleSuperAdmin;
+
+    @Value("${role.id.adminfasilitas}")
+    String roleAdminFasilitas;
+
     public Object getByEmail(String email){
-        return trr.findByCreatedByOrderByCreatedDateDesc(email);
+        if(email != null){
+            return trvr.findByCreatedByOrderByCreatedDateDesc(email);
+        }
+        return trvr.findAllByOrderByCreatedDateDesc();
+    }
+
+    public Object getPersetujuan(String email){
+        if(email != null){
+            ViewTblUsers vtu = vtus.getByEmail(email);
+            String roleId = vtu.getRoleId();
+            roleId = (roleId == null) ? "" : roleId;
+            String unitId = vtu.getUnitId();
+            if(roleId.equals(roleAdminFasilitas)){
+                return trvr.findByIdUnit(unitId);
+            }else if(roleId.equals(roleSuperAdmin) || roleId.equals(roleIdAdminPromet)){
+                return trvr.findAllByOrderByCreatedDateDesc();
+            }else{
+                return trvr.findByCreatedByOrderByCreatedDateDesc(email);
+            }
+        }
+        return trvr.findByCreatedByOrderByCreatedDateDesc(email);
+    }
+
+    public Object getAll(){
+        return trvr.findAll();
+    }
+
+    public Object getApprovedData(){
+        return trvr.findByStatus("APPR");
     }
 
     public Object post(TblReservasi tblReservasi){
@@ -60,8 +108,79 @@ public class ReservasiService {
         String idFileExisting = "";
         String idFileInput = "";
 
+        ViewTblUsers vtu = vtus.getByEmail(tblReservasi.getCreatedBy());
+        String roleId = vtu.getRoleId();
+
+        Integer jumlahExternal = tblReservasi.getJumlahExternal();
+        jumlahExternal = (jumlahExternal == null) ? 0 : jumlahExternal;
+
+        /*set null data konsumsi jika jumlah external 0*/
+        if(jumlahExternal == 0){
+            tblReservasi.setKonsumsi(null);
+        }
+
         Map<String, Object> map = new HashMap<>();
         Boolean isLampiranInput = true;
+
+        Date tglAcara = tblReservasi.getJadwalMulai();
+        Date tglSelesai = tblReservasi.getJadwalSelesai();
+        Date now = new Date();
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+        LocalDateTime nt = LocalDateTime.ofInstant(now.toInstant(), ZoneId.systemDefault());
+        LocalDateTime d1 = LocalDateTime.ofInstant(tglAcara.toInstant(), ZoneId.systemDefault());
+        LocalDateTime d2 = LocalDateTime.ofInstant(tglSelesai.toInstant(), ZoneId.systemDefault());
+
+        String startDateRapat = dtf.format(d1);
+        String finishDateRapat = dtf.format(d2);
+
+        LocalTime maxTime = LocalTime.parse("21:00:00"); /*set waktu selesai maksimal*/
+        LocalTime minTime = LocalTime.parse("07:00:00"); /*set waktu mulai maksimal*/
+        LocalTime finishTime = LocalTime.parse(finishDateRapat);
+        LocalTime startTime = LocalTime.parse(startDateRapat);
+
+        /*validasi jam mulai dan jam selesai*/
+        Long itvFinish = finishTime.until(maxTime, ChronoUnit.SECONDS);
+        Long itvStart = minTime.until(startTime, ChronoUnit.SECONDS);
+        if(itvFinish.intValue() < 0 || itvStart.intValue() < 0){
+            map.put("code", -1);
+            map.put("message", "Pemesanan hanya dapat dimulai pukul 07:00 - 21:00");
+            return map;
+        }
+
+        /*get interval or gap day*/
+        Long interval = tglAcara.getTime() - now.getTime();
+        Long gapDay = interval / (60 * 60 * 24 * 1000);
+
+        if(!roleId.equals(roleIdAdminPromet)){
+            if(gapDay < 1){
+                map.put("code", -1);
+                map.put("message", "Pemesanan dapat dilakukan mulai 1 hari sebelum waktu rapat");
+                return map;
+            }
+        }
+
+        /*validasi pemesanan makanan minimal 30 menit sebelum rapat*/
+        Long itvMakanan = d1.until(nt, ChronoUnit.SECONDS);
+        Long mm = new Long(30 * 60);
+        int sizeKonsumsi = (tblReservasi.getKonsumsi() != null) ? tblReservasi.getKonsumsi().size() : 0;
+        if(itvMakanan.intValue() < mm.intValue() && sizeKonsumsi > 0){
+            map.put("code", -1);
+            map.put("message", "Pemesanan konsumsi minimal 30 menit sebelum rapat");
+            return map;
+        }
+
+        /*validasi durasi pemesanan ruangan maksimal 3 hari*/
+        Long intervalReservasi = tglSelesai.getTime() - tglAcara.getTime();
+        Long gapDayReservasi = intervalReservasi / (60 * 60 * 24 * 1000);
+//        System.out.println(intervalReservasi);
+//        System.out.println(gapDayReservasi);
+        if(gapDayReservasi > 2){
+            map.put("code", -1);
+            map.put("message", "Maksimal pemesanan rapat 3 hari");
+            return map;
+        }
+
         /*set lampiran null ketika user tidak melampirkan file reservasi*/
         try{
             int l = tblReservasi.getLampiran().size();
@@ -77,8 +196,6 @@ public class ReservasiService {
             tblReservasi.setLampiran(null);
             isLampiranInput = false;
         }
-
-//        System.out.println("is lampiran : "+isLampiranInput);
 
         Boolean isLayoutValid = this.validationLayoutRuangan(tblReservasi);
         if(isLayoutValid){
@@ -102,7 +219,6 @@ public class ReservasiService {
                 }
             }else{
                 /*set created date*/
-                Date now = new Date();
                 tblReservasi.setCreatedDate(now);
             }
 
@@ -122,16 +238,10 @@ public class ReservasiService {
             /*delete data file lama, ketika user merubah data lampiran pada reservasi*/
             if(!idFileExisting.equals(idFileInput) && id != null){
                 /*delete file upload lampiran lama*/
-                System.out.println("delete data lampiran lama");
                 tur.deleteById(idFileExisting);
                 sf.delete(path);
             }
 
-//            List<ViewTblUpload> listUpload = vtur.findByIdLampiranIsNullAndGedungUploadIsNullAndFileVendorIsNull();
-//            for(int i = 0;i<listUpload.size();i++){
-//                System.out.println(listUpload.get(i).getId());
-//            }
-//            vus.deleteSomeLampiran(listUpload); /*delete unmapped data upload*/
 
             map.put("code", 1);
             map.put("message", "Reservasi ruangan berhasil");
@@ -206,10 +316,10 @@ public class ReservasiService {
                 String idFasInput = itemReservFasilitas.getDataFasilitas().getId();
                 String idFas = item.getIdFasilitas();
                 if(idFasInput.equals(idFas)){
-                    System.out.println("fasilitas : "+item.getName());
-                    System.out.println("raady : "+ready);
-                    System.out.println("reserved : "+itemReservFasilitas.getJumlah());
-                    System.out.println("");
+//                    System.out.println("fasilitas : "+item.getName());
+//                    System.out.println("raady : "+ready);
+//                    System.out.println("reserved : "+itemReservFasilitas.getJumlah());
+//                    System.out.println("");
                     remains = ready - itemReservFasilitas.getJumlah();
                 }
             }
@@ -297,8 +407,8 @@ public class ReservasiService {
     }
 
     public Object getById(String id){
-        Optional<TblReservasi> data = trr.findById(id);
-        String idExists = data.map(TblReservasi::getId).orElse("");
+        Optional<TblReservasiView> data = trvr.findById(id);
+        String idExists = data.map(TblReservasiView::getId).orElse("");
 
         Map<String, Object> map = new HashMap<>();
         if(!idExists.equals("")){
@@ -314,7 +424,7 @@ public class ReservasiService {
 
     public Boolean validationLayoutRuangan(TblReservasi tblReservasi){
         List<TblDetailReservasiLayout> layout = tblReservasi.getLayouts();
-        System.out.println("size of layout : "+layout.size());
+//        System.out.println("size of layout : "+layout.size());
 
         for(TblDetailReservasiLayout item : layout){
             String idLayout = item.getLayout().getId();
