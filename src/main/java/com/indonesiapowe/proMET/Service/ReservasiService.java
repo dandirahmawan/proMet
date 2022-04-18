@@ -62,6 +62,9 @@ public class ReservasiService {
     @Autowired
     ViewTblUsersService vtus;
 
+    @Autowired
+    TblMasterUnitRepository tmur;
+
     String roleIdAdminPromet = "6DEB5FAC-7D49-4A75-A774-2433412A6DBF";
 
     @Value("${role.id.superadmin}")
@@ -82,7 +85,14 @@ public class ReservasiService {
             ViewTblUsers vtu = vtus.getByEmail(email);
             String roleId = vtu.getRoleId();
             roleId = (roleId == null) ? "" : roleId;
+
             String unitId = vtu.getUnitId();
+            String site = vtu.getSitegroup();
+            if(site.equals("IP")){
+                Optional<TblMasterUnit> masterUnit = tmur.findByNamaUnitIgnoreCase("kantor pusat");
+                unitId = masterUnit.map(TblMasterUnit::getId).orElse("");
+            }
+
             if(roleId.equals(roleAdminFasilitas)){
                 return trvr.findByIdUnit(unitId);
             }else if(roleId.equals(roleSuperAdmin) || roleId.equals(roleIdAdminPromet)){
@@ -164,11 +174,16 @@ public class ReservasiService {
         Long itvMakanan = d1.until(nt, ChronoUnit.SECONDS);
         Long mm = new Long(30 * 60);
         int sizeKonsumsi = (tblReservasi.getKonsumsi() != null) ? tblReservasi.getKonsumsi().size() : 0;
-        if(itvMakanan.intValue() < mm.intValue() && sizeKonsumsi > 0){
-            map.put("code", -1);
-            map.put("message", "Pemesanan konsumsi minimal 30 menit sebelum rapat");
-            return map;
+
+        /*jika pesanan hari ini validasi 30 menit sebelum rapat untuk konsumsi*/
+        if(gapDay == 0){
+            if(itvMakanan.intValue() < mm.intValue() && sizeKonsumsi > 0){
+                map.put("code", -1);
+                map.put("message", "Pemesanan konsumsi minimal 30 menit sebelum rapat");
+                return map;
+            }
         }
+
 
         /*validasi durasi pemesanan ruangan maksimal 3 hari*/
         Long intervalReservasi = tglSelesai.getTime() - tglAcara.getTime();
@@ -178,6 +193,12 @@ public class ReservasiService {
         if(gapDayReservasi > 2){
             map.put("code", -1);
             map.put("message", "Maksimal pemesanan rapat 3 hari");
+            return map;
+        }
+
+        if(gapDayReservasi < 0){
+            map.put("code", -1);
+            map.put("message", "Tanggal akhir rapat kurang dari tanggal mulai");
             return map;
         }
 

@@ -34,8 +34,17 @@ public class TblRealisasiBiayaKonsumsi {
     @Column(name = "snack_sore")
     String snackSore;
 
-    @Column(name = "rupiah_konsumsi")
-    BigDecimal rupiahKonsumsi;
+    @Column(name = "rupiah_konsumsi_pagi")
+    BigDecimal rupiahKonsumsiPagi;
+
+    @Column(name = "rupiah_konsumsi_siang")
+    BigDecimal rupiahKonsumsiSiang;
+
+    @Column(name = "rupiah_konsumsi_sore")
+    BigDecimal rupiahKonsumsiSore;
+
+    @Column(name = "biaya_tambahan")
+    BigDecimal biayaTambahan;
 
     @Column(name = "created_date")
     Date createdDate;
@@ -63,4 +72,6 @@ public class TblRealisasiBiayaKonsumsi {
 
     @Column(name = "keterangan_peserta_external")
     String keteranganPesertaExternal;
+
+    String keterangan;
 }

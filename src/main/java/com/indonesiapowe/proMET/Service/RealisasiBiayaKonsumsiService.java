@@ -2,6 +2,7 @@ package com.indonesiapowe.proMET.Service;
 
 import com.indonesiapowe.proMET.Model.*;
 import com.indonesiapowe.proMET.Model.ModelView.TblDetailReservasiLayoutView;
+import com.indonesiapowe.proMET.Repository.TblMasterUnitRepository;
 import com.indonesiapowe.proMET.Repository.TblRealisasiBiayaKonsumsiRepository;
 import com.indonesiapowe.proMET.Repository.ViewTblRealisasiBiayaKonsumsiRepository;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
@@ -38,25 +39,63 @@ public class RealisasiBiayaKonsumsiService {
     @Autowired
     ViewTblUsersService vtus;
 
+    @Autowired
+    TblMasterUnitRepository tmur;
+
     @Value("${role.id.superadmin}")
     String roleSuperAdmin;
 
     @Value("${role.id.adminpromet}")
     String roleAdminPromet;
 
-    public Object getAll(String username){
+    @Value("${role.id.adminfasilitas}")
+    String roleAdminFasilitas;
+
+    public List<ViewTblRealisasiBiayaKonsumsi> getAll(String username, Date startDate, Date endDate){
         if(username != null){
             ViewTblUsers vtu = vtus.getByEmail(username);
             String idUnit = vtu.getUnitId();
+            String site = vtu.getSitegroup();
+            String roleId = vtu.getRoleId();
+
+            if(site.equals("IP")){
+                Optional<TblMasterUnit> masterUnit = tmur.findByNamaUnitIgnoreCase("kantor pusat");
+                idUnit = masterUnit.map(TblMasterUnit::getId).orElse("");
+            }
+
+            if(roleId.equals(roleAdminFasilitas)){
+                if(startDate == null || endDate == null){
+                    return vtrbkr.findByIdUnitOrderByCreatedDateDesc(idUnit);
+                }else{
+                    return vtrbkr.findByIdUnitAndTanggalAcaraBetweenOrderByCreatedDateDesc(idUnit, startDate, endDate);
+                }
+            }else if(roleId.equals(roleSuperAdmin) || roleId.equals(roleAdminPromet)){
+                if(startDate == null || endDate == null) {
+                    return vtrbkr.findAllByOrderByCreatedDateDesc();
+                }else{
+                    return vtrbkr.findAllByTanggalAcaraBetweenOrderByCreatedDateDesc(startDate, endDate);
+                }
+            }else{
+                if(startDate == null || endDate == null) {
+                    return vtrbkr.findByCreatedByOrderByCreatedDateDesc(username);
+                }else{
+                    return vtrbkr.findByCreatedByAndTanggalAcaraBetweenOrderByCreatedDateDesc(username, startDate, endDate);
+                }
+            }
+
 //            String roleId = vtu.getRoleId();
 //            if(roleId.equals(roleSuperAdmin) || roleId.equals(roleAdminPromet)){
 //                return vtrbkr.findAllByOrderByCreatedDateDesc();
 //            }else{
 //                return vtrbkr.findByIdUnitOrderByCreatedDateDesc(idUnit);
 //            }
-            return vtrbkr.findByIdUnitOrderByCreatedDateDesc(idUnit);
+//            return vtrbkr.findByIdUnitOrderByCreatedDateDesc(idUnit);
         }else{
-            return vtrbkr.findAllByOrderByCreatedDateDesc();
+            if(startDate == null || endDate == null) {
+                return vtrbkr.findAllByOrderByCreatedDateDesc();
+            }else{
+                return vtrbkr.findAllByTanggalAcaraBetweenOrderByCreatedDateDesc(startDate, endDate);
+            }
         }
     }
 
@@ -102,8 +141,21 @@ public class RealisasiBiayaKonsumsiService {
         return map;
     }
 
-    public void export(HttpServletResponse response, String type){
-        List<ViewTblRealisasiBiayaKonsumsi> data = vtrbkr.findAllByOrderByCreatedDateDesc();
+    public void export(HttpServletResponse response, String type, String username, String sd, String ed){
+        List<ViewTblRealisasiBiayaKonsumsi> data = new ArrayList<>();
+
+        if(sd != null){
+            try{
+                Date startDate = new SimpleDateFormat("dd/MM/yyyy").parse(sd);
+                Date endDate = new SimpleDateFormat("dd/MM/yyyy").parse(ed);
+                data = this.getAll(username, startDate, endDate);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }else{
+            data =  this.getAll(username, null, null);
+        }
+
         if(type.equalsIgnoreCase("excel")){
             try {
                 this.exportExcel(data, response);
@@ -290,8 +342,8 @@ public class RealisasiBiayaKonsumsiService {
         String[] columnHeader = {"No", "Tanggal Permohonan", "Tanggal Acara", "Waktu Mulai", "Waktu Selesai",
                 "Divisi / Department / Bidang", "Nama Rapat", "Ruang Rapat", "Gedung", "Lantai",
                 "Jumlah Peserta Internal", "Jumlah Peserta External", "Keterangan Peserta External",
-                "Jumlah Konsumsi yang Disetujui", "Snack Pagi (Nama Vendor)", "Snack Siang (Nama Vendor)",
-                "Snack Sore (Nama Vendor)", "Peralatan Bantu", "Rupiah Konsumsi"};
+                "Jumlah Konsumsi yang Disetujui", "Snack Pagi (Nama Vendor)", "Rupiah Konsumsi Pagi" ,"Snack Siang (Nama Vendor)",
+                "Rupiah Konsumsi Siang", "Snack Sore (Nama Vendor)", "Rupiah Konsumsi Sore", "Peralatan Bantu", "Jumlah Rupiah Konsumsi"};
 
 
         XSSFFont fontHeader = workbook.createFont();
@@ -355,7 +407,10 @@ public class RealisasiBiayaKonsumsiService {
             String snackPagi = (item.getSnackPagi() != null) ? item.getSnackPagi().getNamaVendor() : "";
             String snackSore = (item.getSnackSore() != null) ? item.getSnackSore().getNamaVendor() : "";
             String snackSiang = (item.getSnackSiang() != null) ? item.getSnackSiang().getNamaVendor() : "";
-            BigDecimal rupiahKonsumsi = item.getRupiahKonsumsi();
+            BigDecimal sumRupiahKonsumsi = item.getSumRupiahKonsumsi();
+            BigDecimal rupiahKonsumsiPagi = item.getRupiahKonsumsiPagi();
+            BigDecimal rupiahKonsumsiSiang = item.getRupiahKonsumsiSiang();
+            BigDecimal rupiahKonsumsiSore = item.getRupiahKonsumsiSore();
 
             String department = item.getReservasi().getCreatedByData().getDepartment();
             String bidang = item.getReservasi().getCreatedByData().getOrganization();
@@ -379,8 +434,8 @@ public class RealisasiBiayaKonsumsiService {
             }
 
             Object[] cellData = {no, tglPermohonanFmt, tglAcaraFmt, waktuMulaiFmt, waktuSelesaiFmt, bidDep, namaRapat, layouts,
-                    layouts, layouts, jumlahInternal, jumlahExternal, ketPeserta, jumlahKonsumsi, snackPagi, snackSiang,
-                    snackSore, fas, rupiahKonsumsi};
+                    layouts, layouts, jumlahInternal, jumlahExternal, ketPeserta, jumlahKonsumsi, snackPagi, rupiahKonsumsiPagi,
+                    snackSiang, rupiahKonsumsiSiang, snackSore, rupiahKonsumsiSore, fas, sumRupiahKonsumsi};
 
 
             /*create data row*/

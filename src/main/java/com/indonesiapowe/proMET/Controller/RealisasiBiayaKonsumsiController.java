@@ -15,6 +15,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +37,7 @@ public class RealisasiBiayaKonsumsiController {
 
     @GetMapping()
     public Object getAll(@RequestParam(name = "username", required = false) String username){
-        return rbks.getAll(username);
+        return rbks.getAll(username, null, null);
     }
 
     @GetMapping("/{id}")
@@ -49,8 +51,13 @@ public class RealisasiBiayaKonsumsiController {
     }
 
     @GetMapping("/export")
-    public Object export(@RequestParam("type") String type, HttpServletResponse response){
-        rbks.export(response, type);
+    public Object export(@RequestParam("type") String type,
+                         @RequestParam(value = "username", required = false) String username,
+                         @RequestParam(value = "sd", required = false) String sd,
+                         @RequestParam(value = "ed", required = false) String ed,
+                         HttpServletResponse response){
+
+        rbks.export(response, type, username, sd, ed);
         Map<String, Object> map = new HashMap<>();
         map.put("path_url", "/realisasi_biaya_konsumsi/excel");
         return map;
@@ -75,7 +82,7 @@ public class RealisasiBiayaKonsumsiController {
                 response.setHeader("Content-Disposition", String.format("inline; filename=\"" + fileNameDownload + "\""));
                 response.setContentLength((int) file.length());
                 InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-                System.out.println(inputStream);
+
                 FileCopyUtils.copy(inputStream, response.getOutputStream());
             }catch (Exception e){
                 e.printStackTrace();

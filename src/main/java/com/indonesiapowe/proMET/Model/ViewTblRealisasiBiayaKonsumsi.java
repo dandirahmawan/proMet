@@ -35,15 +35,6 @@ public class ViewTblRealisasiBiayaKonsumsi {
     @Column(name = "jumlah_konsumsi_disetujui")
     Integer jumlahKonsumsiDisetujui;
 
-//    @Column(name = "snack_pagi")
-//    String snackPagi;
-//
-//    @Column(name = "snack_siang")
-//    String snackSiang;
-//
-//    @Column(name = "snack_sore")
-//    String snackSore;
-
     @OneToOne(targetEntity = TblMasterVendor.class, cascade = CascadeType.REFRESH)
     @JoinColumn(name = "snack_pagi", referencedColumnName = "id")
     TblMasterVendor snackPagi;
@@ -56,8 +47,20 @@ public class ViewTblRealisasiBiayaKonsumsi {
     @JoinColumn(name = "snack_sore", referencedColumnName = "id")
     TblMasterVendor snackSore;
 
-    @Column(name = "rupiah_konsumsi")
-    BigDecimal rupiahKonsumsi;
+    @Column(name = "rupiah_konsumsi_pagi")
+    BigDecimal rupiahKonsumsiPagi;
+
+    @Column(name = "rupiah_konsumsi_siang")
+    BigDecimal rupiahKonsumsiSiang;
+
+    @Column(name = "rupiah_konsumsi_sore")
+    BigDecimal rupiahKonsumsiSore;
+
+    @Column(name = "sum_rupiah_konsumsi")
+    BigDecimal sumRupiahKonsumsi;
+
+    @Column(name = "biaya_tambahan")
+    BigDecimal biayaTambahan;
 
     @Column(name = "created_date")
     Date createdDate;
@@ -79,4 +82,6 @@ public class ViewTblRealisasiBiayaKonsumsi {
 
     @Column(name = "keterangan_peserta_external")
     String keteranganPesertaExternal;
+
+    String keterangan;
 }
