@@ -104,6 +104,7 @@ public class ChoicesServices {
     public Object getChoicesFasilitas(String idUnit, String startDate, String finishDate, String idReservasi){
         List<ViewSumFasilitasReservasi> fasData = new ArrayList<>();
         fasData = fasRepo.findChoicesData(startDate, finishDate, idUnit);
+        System.out.println("id reservasi : "+idReservasi);
 
         if(idReservasi != null){
             /*fetch dara fasilitas yang sudah di set sebelumnya*/
@@ -120,6 +121,8 @@ public class ChoicesServices {
 
                         /*jumlah reserved diakumulasi dengan data tersedia,
                         karena ketika edi data reserve di hitung sebagai jumlah tersedia*/
+//                        System.out.println("jumlah reserved "+jumlahReserved);
+//                        System.out.println("jumlah tersedia "+jumlahTersedia);
                         Integer count = jumlahReserved + jumlahTersedia;
 
                         /*data terpakai hasil dari pengurangan data tersedia

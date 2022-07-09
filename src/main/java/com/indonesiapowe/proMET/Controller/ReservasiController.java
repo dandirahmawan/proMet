@@ -36,7 +36,7 @@ public class ReservasiController {
 
     @PostMapping()
     public Object post(@RequestBody TblReservasi tblReservasi){
-        return rs.post(tblReservasi);
+        return rs.post(tblReservasi, false);
     }
 
     @DeleteMapping()
@@ -46,7 +46,7 @@ public class ReservasiController {
 
     @PostMapping("/approve")
     public Object approve(@RequestBody TblReservasi reservasi){
-        return rs.approve(reservasi);
+        return rs.post(reservasi, true);
     }
 
     @PostMapping("/reject")

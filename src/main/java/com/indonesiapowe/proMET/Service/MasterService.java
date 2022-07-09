@@ -67,6 +67,12 @@ public class MasterService {
     @Value("${role.id.superadmin}")
     String roleIdSuperadmin;
 
+    @Value("${role.id.adminpromet}")
+    String roleAdminPromet;
+
+    @Value("${role.id.admingaf}")
+    String roleAdminGaf;
+
     public Object getUnit(String id){
         if(id == null) {
             return vtmur.findAll();
@@ -79,18 +85,17 @@ public class MasterService {
         if(username != null){
             ViewTblUsers vtu = vtus.getByEmail(username);
             String roleId = vtu.getRoleId();
-            if(!roleId.equals(roleIdSuperadmin)){
+            if(!roleId.equals(roleIdSuperadmin) && !roleId.equals(roleAdminPromet) && !roleId.equals(roleAdminGaf)){
                 idUnit = (vtu.getUnitId() == null) ? "" : vtu.getUnitId();
             }
         }
 
-        if (idUnit == null && id == null) {
+        if ((idUnit == null || idUnit.equals("")) && id == null) {
             return ruanganRepoView.findAll();
         }else if(id != null) {
             return ruanganRepoView.findById(id);
         }else{
-            idUnit = (idUnit.equals("")) ? null : idUnit;
-            List<TblMasterRuanganView> ruangans = ruanganRepoView.findByIdUnit(idUnit);
+            List<TblMasterRuanganView> ruangans = ruanganRepoView.findByIdUnit(idUnit);;
             if(kapasitas != null){
                 for(int i = 0;i<ruangans.size();i++){
                     Boolean validCapacity = false;
@@ -130,7 +135,8 @@ public class MasterService {
                 ViewTblUsers vtu = vtus.getByEmail(username);
                 String roleId = vtu.getRoleId();
                 String idUnit = vtu.getUnitId();
-                if(!roleId.equals(roleIdSuperadmin)){
+//                if(!roleId.equals(roleIdSuperadmin) && !roleAdminPromet.equals(roleId)){
+                if(!roleId.equals(roleIdSuperadmin) && !roleId.equals(roleAdminPromet) && !roleId.equals(roleAdminGaf)){
                     return fasilitasRepo.findByIdUnit(idUnit);
                 }else{
                     return fasilitasRepo.findAll();
@@ -158,16 +164,21 @@ public class MasterService {
         if(username != null){
             ViewTblUsers vtu = vtus.getByEmail(username);
             String roleId = (vtu.getRoleId() == null) ? "" : vtu.getRoleId();
-            if(!roleId.equals(roleIdSuperadmin)){
+//            if(!roleId.equals(roleIdSuperadmin)){
+//            if(!roleId.equals(roleIdSuperadmin) && !roleAdminPromet.equals(roleId)){
+            if(!roleId.equals(roleIdSuperadmin) && !roleId.equals(roleAdminPromet) && !roleId.equals(roleAdminGaf)){
                 idUnit = (vtu.getUnitId() == null) ? "" : vtu.getUnitId();
             }
         }
 
         if(id == null && idUnit == null) {
+//            System.out.println("1");
             return vtmgr.findAll();
         }else if(id != null){
+//            System.out.println("2");
             return vtmgr.findById(id);
         }else{
+//            System.out.println("3");
             idUnit = (idUnit.equals("")) ? null : idUnit; /* uniqueidentifier cannot set "" */
             return vtmgr.findByIdUnit(idUnit);
         }

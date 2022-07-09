@@ -51,6 +51,9 @@ public class RealisasiBiayaKonsumsiService {
     @Value("${role.id.adminfasilitas}")
     String roleAdminFasilitas;
 
+    @Value("${role.id.admingaf}")
+    String roleAdminGaf;
+
     public List<ViewTblRealisasiBiayaKonsumsi> getAll(String username, Date startDate, Date endDate){
         if(username != null){
             ViewTblUsers vtu = vtus.getByEmail(username);
@@ -69,7 +72,7 @@ public class RealisasiBiayaKonsumsiService {
                 }else{
                     return vtrbkr.findByIdUnitAndTanggalAcaraBetweenOrderByCreatedDateDesc(idUnit, startDate, endDate);
                 }
-            }else if(roleId.equals(roleSuperAdmin) || roleId.equals(roleAdminPromet)){
+            }else if(roleId.equals(roleSuperAdmin) || roleId.equals(roleAdminPromet) || roleId.equals(roleAdminGaf)){
                 if(startDate == null || endDate == null) {
                     return vtrbkr.findAllByOrderByCreatedDateDesc();
                 }else{
