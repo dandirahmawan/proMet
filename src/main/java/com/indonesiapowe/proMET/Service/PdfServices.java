@@ -53,6 +53,7 @@ public class PdfServices {
                 dir.mkdir();
             }
 
+
             PdfWriter writer = new PdfWriter("../report/REPORT-"+stringdate+".pdf");
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document doc = new Document(pdfDoc);
@@ -82,7 +83,7 @@ public class PdfServices {
         Table tblWrapper = new Table(1);
         table.setWidthPercent(100);
 
-        String path = ResourceUtils.getFile("classpath:static/image/logo.png").getPath();
+        String path = "../image/logo.png";
         ImageData data = ImageDataFactory.create(path);
         Image img = new Image(data);
         img.setWidth(50);
