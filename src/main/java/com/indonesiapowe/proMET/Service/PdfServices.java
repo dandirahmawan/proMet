@@ -180,7 +180,7 @@ public class PdfServices {
     }
 
     public void listTable(Document doc, String reservasiId) throws Exception{
-        float [] pointColumnWidths1 = {15, 90, 90, 90, 90, 90};
+        float [] pointColumnWidths1 = {20, 90, 70, 70, 90, 70, 140};
         Table table = new Table(pointColumnWidths1);
         table.setWidthPercent(100);
         PdfFont font = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
@@ -192,6 +192,7 @@ public class PdfServices {
         table.addCell(this.cell("Instansi", 8, HorizontalAlignment.CENTER, font));
         table.addCell(this.cell("Divisi / Unit", 8, HorizontalAlignment.CENTER, font));
         table.addCell(this.cell("Jabatan", 8, HorizontalAlignment.CENTER, font));
+        table.addCell(this.cell("Email / No. HP", 8, HorizontalAlignment.CENTER, font));
 
         /*get list data*/
         List<TblHadirReservasiOnline> data = repo.findByReservasiId(reservasiId);
@@ -203,6 +204,8 @@ public class PdfServices {
             String div = item.getDivisiUnit();
             String jabatan = item.getJabatan();
             String no = String.valueOf(i + 1);
+            String email = item.getEmail();
+            String hp = item.getNoHp();
 
             table.addCell(this.cell(no, 8, HorizontalAlignment.CENTER, font1));
             table.addCell(this.cell(name, 8, HorizontalAlignment.CENTER, font1));
@@ -210,6 +213,7 @@ public class PdfServices {
             table.addCell(this.cell(instansi, 8, HorizontalAlignment.CENTER, font1));
             table.addCell(this.cell(div, 8, HorizontalAlignment.CENTER, font1));
             table.addCell(this.cell(jabatan, 8, HorizontalAlignment.CENTER, font1));
+            table.addCell(this.cell(email+" "+hp, 8, HorizontalAlignment.CENTER, font1));
         }
 
         doc.add(table);

@@ -33,4 +33,11 @@ public class TblHadirReservasiOnline {
     @Column(name = "reservasi_id")
     String reservasiId;
 
+    String email;
+
+    @Column(name = "no_hp")
+    String noHp;
+
+    @Column(name = "media_kegiatan")
+    String mediaKegiatan;
 }
