@@ -1,5 +1,6 @@
 package com.indonesiapowe.proMET.Service;
 
+import com.google.zxing.EncodeHintType;
 import com.indonesiapowe.proMET.Model.ModelView.ViewTblReservasiOnline;
 import com.indonesiapowe.proMET.Model.TblHadirReservasiOnline;
 import com.indonesiapowe.proMET.Model.TblReservasiOnline;
@@ -8,10 +9,12 @@ import com.indonesiapowe.proMET.Repository.TblHadirReservasiOnlineRepository;
 import com.indonesiapowe.proMET.Repository.TblReservasiOnlineDetailRepository;
 import com.indonesiapowe.proMET.Repository.TblReservasiOnlineRepository;
 import com.indonesiapowe.proMET.Repository.ViewTblReservasiOnlineRepository;
+import com.itextpdf.text.pdf.qrcode.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,10 +35,21 @@ public class TblReservasiOnlineService {
     @Autowired
     TblHadirReservasiOnlineRepository attendanceRepo;
 
+    @Autowired
+    QrCodeServices qs;
+
     public Object post(HttpServletRequest request, TblReservasiOnline tblReservasiOnline){
         repo.save(tblReservasiOnline);
         String nid = tblReservasiOnline.getId();
         Map<String, Object> map = new HashMap<>();
+
+        /*generate qr code*/
+        Optional<ViewTblReservasiOnline> dataView = repoList.findById(nid);
+        String ids = dataView.map(ViewTblReservasiOnline::getId).orElse("");
+        if(!ids.equals("")) {
+            String data = dataView.get().getGeneratedLink();
+            this.generateQR(data, nid);
+        }
 
         if(nid != null){
             map.put("code", 1);
@@ -47,6 +61,25 @@ public class TblReservasiOnlineService {
             map.put("data", null);
         }
         return map;
+    }
+
+    public void generateQR(String data, String idReservasi) {
+        try {
+            //path where we want to get QR Code
+            File dir = new File("../QR_IMAGE");
+            if(!dir.exists()) dir.mkdir();
+
+            String path = "../QR_IMAGE/qr_reservasi_"+idReservasi+".png";
+            //Encoding charset to be used
+            String charset = "UTF-8";
+            Map<EncodeHintType, ErrorCorrectionLevel> hashMap = new HashMap<EncodeHintType, ErrorCorrectionLevel>();
+            //generates QR code with Low level(L) error correction capability
+            hashMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+            //invoking the user-defined method that creates the QR code
+            qs.generateQRcode(data, path, charset, hashMap, 500, 500);//increase or decrease height and width accodingly
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public Object getAll(HttpServletRequest request){

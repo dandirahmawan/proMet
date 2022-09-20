@@ -50,4 +50,7 @@ public class ViewTblReservasiOnline {
 
     @Column(name = "generated_link")
     String generatedLink;
+
+    @Column(name = "qr_code")
+    String qrCode;
 }

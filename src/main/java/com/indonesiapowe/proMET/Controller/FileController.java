@@ -30,4 +30,9 @@ public class FileController {
     public void download(@PathVariable String idLampiran, HttpServletResponse response){
         fs.download(response, idLampiran);
     }
+
+    @GetMapping("/qr/{id}")
+    public void qrImgae(HttpServletResponse response, @PathVariable String id){
+        fs.downloadQr(response, id);
+    }
 }
