@@ -59,7 +59,7 @@ public class FileService {
     }
 
     public void downloadQr(HttpServletResponse response, String reservasiId){
-        String file = "qr_reservasi_"+reservasiId+".png";
+        String file = "qr_reservasi_"+reservasiId.toLowerCase()+".png";
         String path = "../QR_IMAGE/"+file;
 
         sf.download(response, path, file);
