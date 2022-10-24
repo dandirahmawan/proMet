@@ -1,6 +1,9 @@
 package com.indonesiapowe.proMET.Controller;
 
+import com.indonesiapowe.proMET.Model.TblReservasiOnline;
 import com.indonesiapowe.proMET.Service.FileService;
+import com.indonesiapowe.proMET.Service.QrCodeServices;
+import com.indonesiapowe.proMET.Service.TblReservasiOnlineService;
 import com.indonesiapowe.proMET.StoreFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.FileCopyUtils;
@@ -20,6 +23,12 @@ public class FileController {
     @Autowired
     FileService fs;
 
+    @Autowired
+    QrCodeServices qcs;
+
+    @Autowired
+    TblReservasiOnlineService serv;
+
     @PostMapping("/upload")
     public Object upload(MultipartFile file){
         System.out.println(file.getOriginalFilename());
@@ -34,5 +43,11 @@ public class FileController {
     @GetMapping("/qr/{id}")
     public void qrImgae(HttpServletResponse response, @PathVariable String id){
         fs.downloadQr(response, id);
+    }
+
+    @GetMapping("/qr_generate")
+    public Object qrImgaeAuto(){
+        serv.autoGenerateQr();
+        return "QR CODE ARE GENERATE";
     }
 }

@@ -83,7 +83,8 @@ public class PdfServices {
         Table tblWrapper = new Table(1);
         table.setWidthPercent(100);
 
-        String path = "../image/logo.png";
+//        String path = "../image/logo.png";
+        String path = "../image/Logo PLN Indonesia Power.png";
         ImageData data = ImageDataFactory.create(path);
         Image img = new Image(data);
         img.setWidth(50);
@@ -96,9 +97,10 @@ public class PdfServices {
         PdfFont font = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
         Cell cell2 = new Cell();
         cell2.setBorder(Border.NO_BORDER);
-        cell2.add("PT. INDONESIA POWER");
+        cell2.add("PT. PLN INDONESIA POWER");
         cell2.setFont(font);
         cell2.setFontSize(10);
+        cell2.setHorizontalAlignment(HorizontalAlignment.CENTER);
         table.addCell(cell2);
         tblWrapper.addCell(table);
 
@@ -172,15 +174,17 @@ public class PdfServices {
 
     public Cell cell(String text, float fontSize, HorizontalAlignment alignment, PdfFont font){
         Cell cell = new Cell();
-        cell.add(text);
-        cell.setHorizontalAlignment(alignment);
-        cell.setFontSize(fontSize);
-        cell.setFont(font);
+        if(text != null) {
+            cell.add(text);
+            cell.setHorizontalAlignment(alignment);
+            cell.setFontSize(fontSize);
+            cell.setFont(font);
+        }
         return cell;
     }
 
     public void listTable(Document doc, String reservasiId) throws Exception{
-        float [] pointColumnWidths1 = {20, 90, 70, 70, 90, 70, 140};
+        float [] pointColumnWidths1 = {20, 90, 70, 70, 90, 70, 140, 60};
         Table table = new Table(pointColumnWidths1);
         table.setWidthPercent(100);
         PdfFont font = PdfFontFactory.createFont(FontConstants.HELVETICA_BOLD);
@@ -193,6 +197,7 @@ public class PdfServices {
         table.addCell(this.cell("Divisi / Unit", 8, HorizontalAlignment.CENTER, font));
         table.addCell(this.cell("Jabatan", 8, HorizontalAlignment.CENTER, font));
         table.addCell(this.cell("Email / No. HP", 8, HorizontalAlignment.CENTER, font));
+        table.addCell(this.cell("Media", 8, HorizontalAlignment.CENTER, font));
 
         /*get list data*/
         List<TblHadirReservasiOnline> data = repo.findByReservasiId(reservasiId);
@@ -204,8 +209,9 @@ public class PdfServices {
             String div = item.getDivisiUnit();
             String jabatan = item.getJabatan();
             String no = String.valueOf(i + 1);
-            String email = item.getEmail();
-            String hp = item.getNoHp();
+            String email = (item.getEmail() != null) ? item.getEmail() : "";
+            String hp = (item.getNoHp() != null) ? item.getNoHp() : "";
+            String media = item.getMediaKegiatan();
 
             table.addCell(this.cell(no, 8, HorizontalAlignment.CENTER, font1));
             table.addCell(this.cell(name, 8, HorizontalAlignment.CENTER, font1));
@@ -214,6 +220,7 @@ public class PdfServices {
             table.addCell(this.cell(div, 8, HorizontalAlignment.CENTER, font1));
             table.addCell(this.cell(jabatan, 8, HorizontalAlignment.CENTER, font1));
             table.addCell(this.cell(email+" "+hp, 8, HorizontalAlignment.CENTER, font1));
+            table.addCell(this.cell(media, 8, HorizontalAlignment.CENTER, font1));
         }
 
         doc.add(table);

@@ -63,6 +63,15 @@ public class TblReservasiOnlineService {
         return map;
     }
 
+    public void autoGenerateQr(){
+        List<ViewTblReservasiOnline> data = repoList.findAll();
+        for(int i = 0;i<data.size();i++){
+            String link = data.get(i).getGeneratedLink();
+            String id = data.get(i).getId();
+            this.generateQR(link, id);
+        }
+    }
+
     public void generateQR(String data, String idReservasi) {
         try {
             //path where we want to get QR Code
